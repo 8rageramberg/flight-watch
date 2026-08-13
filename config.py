@@ -142,14 +142,15 @@ class Search:
 
 SEARCHES: list[Search] = [
     Search(
-        name="Lisbon – September/October",
+        name="Lisbon – Weekend Getaways",
         origins=["OSL"],
         destinations=["LIS"],
         window=DateWindow(
             start=date(2026, 9, 18),
             end=date(2026, 10, 12),
-            trip_lengths=[5, 7, 9],
-            step_days=2,
+            trip_lengths=[2, 3],
+            step_days=7,
+            weekdays=[3, 4, 5],  # Thu/Fri/Sat departures only
         ),
         limits=EUROPE_LIMITS,
         weights=DEFAULT_WEIGHTS,

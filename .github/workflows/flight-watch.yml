@@ -2,8 +2,8 @@ name: Flight Watch
 
 on:
   schedule:
-    # 6 AM CET every day (5 AM UTC in winter, 4 AM UTC in summer)
-    - cron: '0 5 * * *'
+    # Every Monday at 6 AM CET (5 AM UTC) - catches weekend deals
+    - cron: '0 5 * * 1'
   workflow_dispatch:
 
 jobs:
