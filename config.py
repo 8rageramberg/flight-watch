@@ -70,20 +70,19 @@ class DateWindow:
 # ---------------------------------------------------------------------------
 
 EUROPE_LIMITS = HardLimits(
-    max_price=3500,
+    max_price=4500,
     max_stops=2,
     max_total_hours=16,
     min_layover_hours=0.75,
     # 'if journey is longer than X hours, it must cost under Y'
     duration_price_rules=[
-        (8, 1800),
-        (10, 1000),
-        (13, 600),
+        (10, 3500),
+        (13, 2500),
     ],
     # same, but for longest layover
     layover_price_rules=[
-        (5, 1600),
-        (9, 900),
+        (8, 3000),
+        (12, 2000),
     ],
 )
 
