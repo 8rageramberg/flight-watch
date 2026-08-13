@@ -3,3 +3,8 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.local
+state.json
+.DS_Store
+*.swp
+*.swo
