@@ -48,39 +48,74 @@ class TripMetrics:
         return min(self.layovers, default=0.0)
 
 
-def _to_datetime(sd) -> datetime:
-    """fast-flights provides dates/times as tuples: (year, month, day) and (hour, minute)."""
-    y, mo, da = sd.date
-    h, mi = sd.time
-    return datetime(y, mo, da, h, mi)
-
-
 def compute_metrics(flight) -> TripMetrics:
-    """Convert a `fast_flights.model.Flights` object into TripMetrics."""
-    legs = flight.flights
+    """Convert a SerpApi Google Flights result into TripMetrics."""
+    # SerpApi format: flight dict with price, duration, airline info, etc.
 
-    flying_minutes = sum(leg.duration or 0 for leg in legs)
+    # Extract price (comes as string like "123" or with currency)
+    price_str = str(flight.get("price", 0)).replace("$", "").replace(",", "").strip()
+    try:
+        price = float(price_str)
+    except (ValueError, TypeError):
+        price = 0.0
 
-    layovers: list[float] = []
-    for i in range(len(legs) - 1):
-        gap = _to_datetime(legs[i + 1].departure) - _to_datetime(legs[i].arrival)
-        layovers.append(gap.total_seconds() / 3600)
+    # Extract duration in minutes and convert to hours
+    duration_str = flight.get("duration", "0h")
+    total_minutes = 0
+    if "h" in duration_str:
+        parts = duration_str.split("h")
+        hours = int(parts[0].strip())
+        minutes = 0
+        if len(parts) > 1 and "m" in parts[1]:
+            minutes = int(parts[1].replace("m", "").strip())
+        total_minutes = hours * 60 + minutes
+    total_hours = total_minutes / 60
 
-    flying_hours = flying_minutes / 60
-    total_hours = flying_hours + sum(layovers)
+    # Extract flight info
+    flights_list = flight.get("flights", [])
+    stops = max(0, len(flights_list) - 1)
 
-    route = legs[0].from_airport.code
-    for leg in legs:
-        route += f"-{leg.to_airport.code}"
+    # Build route and get airlines
+    route_parts = []
+    airlines = []
+    for f in flights_list:
+        if f.get("departure_airport", {}).get("id"):
+            route_parts.append(f["departure_airport"]["id"])
+        if f.get("airline"):
+            airline = f.get("airline", "Unknown")
+            if airline not in airlines:
+                airlines.append(airline)
+    if flights_list and flights_list[-1].get("arrival_airport", {}).get("id"):
+        route_parts.append(flights_list[-1]["arrival_airport"]["id"])
+
+    route = "-".join(route_parts) if route_parts else "UNKNOWN"
+
+    # Parse departure and arrival times
+    departure_str = flight.get("departure_time", "")
+    arrival_str = flight.get("arrival_time", "")
+
+    departure = None
+    arrival_local = None
+
+    # Estimate departure/arrival from strings like "8:00 AM" or "5:30 PM"
+    try:
+        if departure_str:
+            dep_time = datetime.strptime(departure_str, "%I:%M %p").time()
+            departure = datetime.combine(datetime.now().date(), dep_time)
+        if arrival_str:
+            arr_time = datetime.strptime(arrival_str, "%I:%M %p").time()
+            arrival_local = datetime.combine(datetime.now().date(), arr_time)
+    except (ValueError, TypeError):
+        pass
 
     return TripMetrics(
-        price=flight.price,
+        price=price,
         total_hours=total_hours,
-        flying_hours=flying_hours,
-        layovers=layovers,
-        stops=len(legs) - 1,
-        airlines=list(flight.airlines),
-        departure=_to_datetime(legs[0].departure),
-        arrival_local=_to_datetime(legs[-1].arrival),
+        flying_hours=total_hours,  # SerpApi doesn't break down flying vs layover time
+        layovers=[],  # SerpApi doesn't provide detailed layover info
+        stops=stops,
+        airlines=airlines if airlines else ["Unknown"],
+        departure=departure,
+        arrival_local=arrival_local,
         route=route,
     )

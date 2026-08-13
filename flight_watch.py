@@ -22,7 +22,10 @@ import time
 from datetime import date
 from pathlib import Path
 
-from fast_flights import FlightData, Passengers, get_flights
+from serpapi import GoogleSearch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from config import CURRENCY, Search, active_searches
 from models import compute_metrics
@@ -63,22 +66,37 @@ def query_one(
     search: Search, origin: str, dest: str, out_date: date, home_date: date
 ) -> list:
     try:
-        flights = get_flights(
-            flight_data=[
-                FlightData(date=out_date.isoformat(), from_airport=origin, to_airport=dest),
-                FlightData(date=home_date.isoformat(), from_airport=dest, to_airport=origin),
-            ],
-            trip="round-trip",
-            seat=search.seat,
-            passengers=Passengers(adults=search.adults),
-            fetch_mode='fallback',
-        )
-        result = list(flights)
-        if result:
-            print(f"      → found {len(result)} flights")
+        api_key = os.environ.get("SERPAPI_API_KEY")
+        if not api_key:
+            print(f"  [!] Missing SERPAPI_API_KEY in .env", file=sys.stderr)
+            return []
+
+        params = {
+            "api_key": api_key,
+            "engine": "google_flights",
+            "departure_id": origin,
+            "arrival_id": dest,
+            "outbound_date": out_date.strftime("%Y-%m-%d"),
+            "return_date": home_date.strftime("%Y-%m-%d"),
+            "adults": search.adults,
+            "currency": CURRENCY,
+            "hl": "en",
+        }
+
+        search_obj = GoogleSearch(params)
+        results = search_obj.get_dict()
+
+        if "error" in results:
+            print(f"  [!] {origin}->{dest} {out_date}: {results['error']}", file=sys.stderr)
+            return []
+
+        flights = results.get("best_flights", []) + results.get("other_flights", [])
+        if flights:
+            print(f"      → found {len(flights)} flights")
         else:
             print(f"      → no flights found", file=sys.stderr)
-        return result
+        return flights
+
     except Exception as exc:
         print(f"  [!] {origin}->{dest} {out_date}: {type(exc).__name__}: {str(exc)[:100]}", file=sys.stderr)
         return []
