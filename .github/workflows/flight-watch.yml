@@ -3,8 +3,13 @@ name: Flight Watch
 on:
   schedule:
     # Every Monday at 6 AM CET (5 AM UTC) - catches weekend deals
+    # Cron format: minute hour day month weekday
     - cron: '0 5 * * 1'
   workflow_dispatch:
+
+# Allow manual triggering and scheduled runs
+permissions:
+  contents: read
 
 jobs:
   check-flights:

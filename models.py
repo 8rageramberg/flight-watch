@@ -39,6 +39,9 @@ class TripMetrics:
     route: str = ""
     """E.g., 'OSL-AMS-LIS'."""
 
+    booking_url: str = ""
+    """Direct link to book this flight on Google Flights."""
+
     @property
     def max_layover(self) -> float:
         return max(self.layovers, default=0.0)
@@ -129,6 +132,9 @@ def compute_metrics(flight) -> TripMetrics:
     except (ValueError, TypeError):
         pass
 
+    # Extract booking URL (SerpApi provides this)
+    booking_url = flight.get("booking_link", "") or flight.get("link", "") or ""
+
     return TripMetrics(
         price=price,
         total_hours=total_hours,
@@ -139,4 +145,5 @@ def compute_metrics(flight) -> TripMetrics:
         departure=departure,
         arrival_local=arrival_local,
         route=route,
+        booking_url=booking_url,
     )

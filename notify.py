@@ -58,14 +58,6 @@ def format_hit(
 
     stops_txt = "direct" if m.stops == 0 else f"{m.stops} stops"
 
-    # Build Google Flights search URL
-    flights_url = (
-        f"https://www.google.com/flights?hl=en#search;"
-        f"f={hit.origin};t={hit.destination};"
-        f"d={hit.out_date.strftime('%Y-%m-%d')};"
-        f"r={hit.home_date.strftime('%Y-%m-%d')}"
-    )
-
     line1 = (
         f"<b>{rank}. {m.price:.0f}</b> · {stops_txt} · "
         f"{m.total_hours:.1f}h · {hit.nights} nights"
@@ -75,9 +67,13 @@ def format_hit(
         f"{html.escape(m.route)} · {html.escape(', '.join(m.airlines))}"
     )
     line3 = f"   <i>weighted: {cost:.0f}</i> — {html.escape(explain(m, ref, w))}"
-    line4 = f"   <a href='{flights_url}'>✈️ View on Google Flights</a>"
 
-    lines = [line1, line2, line3, line4]
+    lines = [line1, line2, line3]
+
+    # Add booking link if available
+    if m.booking_url:
+        line4 = f"   <a href='{html.escape(m.booking_url)}'>✈️ Book on Google Flights</a>"
+        lines.append(line4)
 
     if rank == 1 and previous_best is not None:
         delta = m.price - previous_best
