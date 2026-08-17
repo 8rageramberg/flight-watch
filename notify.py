@@ -70,23 +70,15 @@ def format_hit(
 
     lines = [line1, line2, line3]
 
-    # Add booking links
-    links = []
-    if m.booking_url:
-        links.append(f"<a href='{html.escape(m.booking_url)}'>🔗 Direct (click within 30 min)</a>")
-
-    # Add fallback search URL (always works, doesn't expire)
+    # Add search URL (token links expire too fast, search URL is evergreen)
     search_url = (
         f"https://www.google.com/flights?hl=en#search;"
         f"f={hit.origin};t={hit.destination};"
         f"d={hit.out_date.strftime('%Y-%m-%d')};"
         f"r={hit.home_date.strftime('%Y-%m-%d')}"
     )
-    links.append(f"<a href='{search_url}'>✈️ Search on Google Flights</a>")
-
-    if links:
-        line4 = f"   {' | '.join(links)}"
-        lines.append(line4)
+    line4 = f"   <a href='{search_url}'>🔗 Book on Google Flights</a>"
+    lines.append(line4)
 
     if rank == 1 and previous_best is not None:
         delta = m.price - previous_best

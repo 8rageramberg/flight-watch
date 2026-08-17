@@ -132,15 +132,9 @@ def compute_metrics(flight) -> TripMetrics:
     except (ValueError, TypeError):
         pass
 
-    # Extract booking URL from departure_token
+    # Note: departure_token expires within minutes, so we don't use it
+    # Instead we'll use search URLs that are evergreen
     booking_url = ""
-    if flight.get("departure_token"):
-        # Build Google Flights URL with departure token (direct to this flight)
-        booking_url = f"https://www.google.com/travel/explore?tfs=CBwQARogGgcKBU9TTCARSgAqBwoDTElTARI9EgEwEgoyMDI2LTA5LTE4KgcKBU9TTCARUgAqBwoDTElTAUIBMBoDUwEYAhoHCgVPU0wgARJHCgNMSVMAUgA&qs=true&utm_source=google_d&utm_medium=cpc&utm_campaign=travel"
-        # Better: use token directly
-        token = flight.get("departure_token")
-        if token:
-            booking_url = f"https://www.google.com/flights?qs=true&tfs={token}"
 
     return TripMetrics(
         price=price,
