@@ -4,7 +4,7 @@ on:
   # Scheduled: Every Monday at 6:17 AM CET (avoiding :00 peak load)
   # Testing: Manual trigger via workflow_dispatch
   schedule:
-    - cron: '17 5 * * 1'
+    - cron: '16 11 * * 1'
       timezone: 'Europe/Oslo'
   workflow_dispatch:
 
@@ -21,7 +21,7 @@ jobs:
           echo "Workflow triggered by: ${{ github.event_name }}"
           echo "Current time UTC: $(date -u)"
           echo "Timezone: Europe/Oslo (CET/CEST)"
-          echo "Schedule: Every Monday 6:17 AM CET"
+          echo "Schedule: Every Monday 12:16 PM CET"
 
       - name: Checkout code
         uses: actions/checkout@v5
